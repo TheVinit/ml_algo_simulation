@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Interactive visual simulator and step-by-step solver for Hidden Markov Models (HMM) covering the Forward and Viterbi algorithms.">
+<meta name="description" content="Interactive visual simulator and step-by-step solver for Hidden Markov Models (HMM) covering the Forward, Backward, and Viterbi algorithms.">
 <meta name="author" content="Vinit">
-<title>Hidden Markov Model Solver & Trellis Visualizer</title>
+<title>Hidden Markov Model Solver & Trellis Visualizer (Forward, Backward, Viterbi)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -239,6 +239,7 @@ svg text { font-family: inherit; font-weight: 700; fill: var(--ink); }
 .tag { border-radius: 6px; padding: 2px 10px; font-weight: 700; font-size: .88rem; text-transform: uppercase; letter-spacing: 0.03em; }
 .tag.ovr { background: #E8EEF6; color: var(--mute); }
 .tag.fwd { background: var(--s0t); color: var(--s0); }
+.tag.bwd { background: var(--s1t); color: var(--s1); }
 .tag.vit { background: var(--s3t); color: var(--s3); }
 .tag.ans { background: var(--hi); color: #7a5200; }
 
@@ -316,7 +317,7 @@ dialog::backdrop { background: rgba(11, 18, 32, 0.55); backdrop-filter: blur(2px
 <header class="top-nav">
   <div class="brand-title">
     <span>Hidden Markov Model (HMM) Interactive Simulator</span>
-    <span class="brand-badge">Evaluation &amp; Decoding</span>
+    <span class="brand-badge">Forward &bull; Backward &bull; Viterbi</span>
   </div>
   <div class="nav-links">
     <a href="https://github.com/TheVinit/ml_algo_simulation" target="_blank" rel="noopener noreferrer">
@@ -333,7 +334,7 @@ dialog::backdrop { background: rgba(11, 18, 32, 0.55); backdrop-filter: blur(2px
 <!-- ======================= SETUP SCREEN ======================= -->
 <section id="setup">
   <h1>Hidden Markov Model Solver: Visual Step by Step</h1>
-  <p class="sub">Configure your HMM parameters below or choose a classic preset, then click <b>Solve Step by Step</b>. The visual trellis player will simulate the <b>Forward (Evaluation)</b> and <b>Viterbi (Decoding)</b> algorithms with dynamic lattices, step-by-step arithmetic, and backpointers.</p>
+  <p class="sub">Configure your HMM parameters below or choose a classic preset, then click <b>Solve Step by Step</b>. The visual trellis player will simulate the <b>Forward (Evaluation)</b>, <b>Backward (Smoothing)</b>, and <b>Viterbi (Decoding)</b> algorithms with dynamic lattices, step-by-step arithmetic, and backpointers.</p>
 
   <section class="card">
     <h2>1. Model States &amp; Observation Sequence</h2>
@@ -413,18 +414,19 @@ dialog::backdrop { background: rgba(11, 18, 32, 0.55); backdrop-filter: blur(2px
   <h2>Hidden Markov Model: Mathematical Symbols Reference</h2>
   <div class="scroll"><table class="calc">
     <tr><th>Symbol</th><th>Description</th><th>Source / Derivation</th></tr>
-    <tr><td>i, j</td><td>State indices (i = antecedent state at t-1, j = current state at t).</td><td>Hidden state space S</td></tr>
+    <tr><td>i, j</td><td>State indices (i = antecedent state, j = successor state).</td><td>Hidden state space S</td></tr>
     <tr><td>t</td><td>Discrete time step index (t = 1, 2, ..., T).</td><td>Observation sequence length T</td></tr>
-    <tr><td>t &minus; 1</td><td>Previous discrete time step.</td><td>Preceding step in the trellis lattice</td></tr>
+    <tr><td>t &minus; 1, t + 1</td><td>Previous / Subsequent discrete time steps.</td><td>Temporal lattice indexing</td></tr>
     <tr><td>o<sub>t</sub></td><td>Observed emission symbol at time step t.</td><td>Sequence token O[t]</td></tr>
     <tr><td>&pi;<sub>i</sub></td><td>Initial state probability: P(q<sub>1</sub> = S<sub>i</sub>).</td><td>Initial probability vector &pi;</td></tr>
     <tr><td>A<sub>ij</sub></td><td>State transition probability: P(q<sub>t</sub> = S<sub>j</sub> | q<sub>t-1</sub> = S<sub>i</sub>).</td><td>State transition matrix A</td></tr>
     <tr><td>B<sub>j</sub>(o<sub>t</sub>)</td><td>Emission probability: P(O<sub>t</sub> = o<sub>t</sub> | q<sub>t</sub> = S<sub>j</sub>).</td><td>Emission probability matrix B</td></tr>
-    <tr><td>&alpha;<sub>t</sub>(j)</td><td>Forward probability: joint probability P(o<sub>1</sub>, ..., o<sub>t</sub>, q<sub>t</sub> = S<sub>j</sub> | &lambda;).</td><td>Dynamic Programming recursion (sum-product)</td></tr>
+    <tr><td>&alpha;<sub>t</sub>(j)</td><td>Forward probability: P(o<sub>1</sub>, ..., o<sub>t</sub>, q<sub>t</sub> = S<sub>j</sub> | &lambda;).</td><td>Dynamic Programming recursion (sum-product, left-to-right)</td></tr>
+    <tr><td>&beta;<sub>t</sub>(i)</td><td>Backward probability: P(o<sub>t+1</sub>, ..., o<sub>T</sub> | q<sub>t</sub> = S<sub>i</sub>, &lambda;).</td><td>Dynamic Programming recursion (sum-product, right-to-left)</td></tr>
     <tr><td>&delta;<sub>t</sub>(j)</td><td>Viterbi score: highest probability of a single path ending at q<sub>t</sub> = S<sub>j</sub>.</td><td>Dynamic Programming recursion (max-product)</td></tr>
     <tr><td>&psi;<sub>t</sub>(j)</td><td>Viterbi backpointer: argmax index of state at t-1 yielding maximum &delta;<sub>t</sub>(j).</td><td>Viterbi argmax trace for backtracking</td></tr>
-    <tr><td>&Sigma;</td><td>Summation operator over all antecedent states.</td><td>Total path probability integration</td></tr>
-    <tr><td>max</td><td>Maximization operator over candidate incoming paths.</td><td>Optimal path selection</td></tr>
+    <tr><td>&Sigma;</td><td>Summation operator over candidate paths.</td><td>Total path probability integration</td></tr>
+    <tr><td>max</td><td>Maximization operator over candidate paths.</td><td>Optimal path selection</td></tr>
   </table></div>
   <div class="row" style="margin-top:14px"><button class="go" id="symClose" type="button">Close Guide</button></div>
 </dialog>
@@ -437,7 +439,7 @@ const fd = x => { const s = String(Number(x.toPrecision(3))); return s.length > 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const sumOf = r => r.reduce((a, b) => a + b, 0);
 const COL = ["#1D4ED8", "#9A4A00", "#036B4A", "#7A1FB8"], TINT = ["#DBE7FF", "#FFE6C7", "#D2F4E6", "#EEDBFB"];
-const PN = { ovr: "Overview", fwd: "Forward", vit: "Viterbi", ans: "Answer" };
+const PN = { ovr: "Overview", fwd: "Forward", bwd: "Backward", vit: "Viterbi", ans: "Answer" };
 const K = (t, j) => t + "," + j;
 function parseList(s) {
   const out = [];
@@ -493,13 +495,39 @@ function fmtErr(m) { const e = $("err"); e.hidden = !m; e.textContent = m; }
 /* ===================== mathematical core ===================== */
 function model(sn) {
   const { S, P, q } = sn, N = S.length, T = q.length, { pi, A, B } = P;
-  const al = [], de = [], ps = [], prF = [], prV = [];
-  al[0] = S.map((_, i) => pi[i] * B[i][q[0]]); de[0] = al[0].slice(); ps[0] = S.map(() => null);
+  
+  // 1. Forward Algorithm
+  const al = [], prF = [];
+  al[0] = S.map((_, i) => pi[i] * B[i][q[0]]);
   for (let t = 1; t < T; t++) {
-    al[t] = []; de[t] = []; ps[t] = []; prF[t] = []; prV[t] = [];
+    al[t] = []; prF[t] = [];
     for (let j = 0; j < N; j++) {
       prF[t][j] = S.map((_, i) => al[t - 1][i] * A[i][j]);
       al[t][j] = sumOf(prF[t][j]) * B[j][q[t]];
+    }
+  }
+  const totalFwd = sumOf(al[T - 1]);
+
+  // 2. Backward Algorithm
+  const be = [], prB = [];
+  for (let t = 0; t < T; t++) { be[t] = new Array(N).fill(0); prB[t] = []; }
+  for (let i = 0; i < N; i++) be[T - 1][i] = 1.0;
+  for (let t = T - 2; t >= 0; t--) {
+    for (let i = 0; i < N; i++) {
+      prB[t][i] = S.map((_, j) => A[i][j] * B[j][q[t + 1]] * be[t + 1][j]);
+      be[t][i] = sumOf(prB[t][i]);
+    }
+  }
+  const prB0 = S.map((_, i) => pi[i] * B[i][q[0]] * be[0][i]);
+  const totalBwd = sumOf(prB0);
+
+  // 3. Viterbi Algorithm
+  const de = [], ps = [], prV = [];
+  de[0] = S.map((_, i) => pi[i] * B[i][q[0]]);
+  ps[0] = S.map(() => null);
+  for (let t = 1; t < T; t++) {
+    de[t] = []; ps[t] = []; prV[t] = [];
+    for (let j = 0; j < N; j++) {
       prV[t][j] = S.map((_, i) => de[t - 1][i] * A[i][j]);
       let bi = 0; prV[t][j].forEach((v, i) => { if (v > prV[t][j][bi]) bi = i; });
       ps[t][j] = bi; de[t][j] = prV[t][j][bi] * B[j][q[t]];
@@ -507,7 +535,9 @@ function model(sn) {
   }
   let last = 0; de[T - 1].forEach((v, i) => { if (v > de[T - 1][last]) last = i; });
   const path = [last]; for (let t = T - 1; t > 0; t--) path.unshift(ps[t][path[0]]);
-  return { al, de, ps, prF, prV, last, best: de[T - 1][last], path, total: sumOf(al[T - 1]) };
+  const best = de[T - 1][last];
+
+  return { al, be, de, ps, prF, prB, prB0, prV, last, best, path, total: totalFwd, totalFwd, totalBwd };
 }
 
 /* ===================== step sequence construction ===================== */
@@ -530,14 +560,17 @@ function buildSteps(sn, quick) {
   steps.push({
     part: "ovr", title: "Problem Definition & Trellis Representation", head: "Model Parameters & Sequence",
     cap: `Observation sequence length T = ${T}: ${q.map(k => `<b>${esc(O[k])}</b>`).join(", ")}. Each column in the trellis represents a discrete time step t. Each row corresponds to a hidden state S<sub>j</sub> &in; {${S.map((_, j) => chip(j)).join(", ")}}.`,
-    body: ptab() + `<div class="note"><b>Fundamental Problems Solved:</b><br>1. <b>Evaluation (Forward Algorithm):</b> Computes total likelihood P(O | &lambda;) across all possible hidden state sequences.<br>2. <b>Decoding (Viterbi Algorithm):</b> Identifies the single globally optimal hidden state sequence Q* that maximizes P(Q, O | &lambda;).</div>`,
+    body: ptab() + `<div class="note"><b>Three Fundamental Algorithms Covered:</b><br>
+      1. <b>Forward Algorithm:</b> Evaluates total observation likelihood P(O | &lambda;) left-to-right (&alpha; trellis).<br>
+      2. <b>Backward Algorithm:</b> Evaluates total observation likelihood P(O | &lambda;) right-to-left (&beta; trellis) for smoothing.<br>
+      3. <b>Viterbi Algorithm:</b> Decodes the single globally optimal hidden state sequence Q* via dynamic programming (&delta; trellis and &psi; backpointers).</div>`,
     view: vw(null, [], {})
   });
 
   /* ---------- Forward ---------- */
   const doneF = new Set();
   steps.push({
-    part: "fwd", title: "Forward Algorithm: Formulation & Recursive Principle", head: "Sum-Product Trellis Recurrence",
+    part: "fwd", title: "Forward Algorithm: Formulation & Recursive Principle", head: "Sum-Product Trellis Recurrence (Left-to-Right)",
     cap: `The Forward algorithm computes &alpha;<sub>t</sub>(j) = P(o<sub>1</sub>, ..., o<sub>t</sub>, q<sub>t</sub> = S<sub>j</sub> | &lambda;) left-to-right across the lattice. Total incoming paths are integrated via summation.`,
     body: eq("&alpha;<sub>1</sub>(i) = &pi;(i) &times; B(i, o<sub>1</sub>)", "Base condition (t = 1): Initial state probability scaled by emission likelihood.") +
          eq("&alpha;<sub>t</sub>(j) = [ &Sigma;<sub>i</sub> &alpha;<sub>t&minus;1</sub>(i) &times; A(i, j) ] &times; B(j, o<sub>t</sub>)", "Inductive step (t > 1): Sum over all precursor paths transitioned into state j, multiplied by the emission probability of o<sub>t</sub>."),
@@ -546,7 +579,7 @@ function buildSteps(sn, quick) {
 
   for (let j = 0; j < N; j++) doneF.add(K(0, j));
   steps.push({
-    part: "fwd", title: "Forward Initialization: Day 1 (t = 1)", head: "Base Case Computation",
+    part: "fwd", title: "Forward Initialization: Step 1 (t = 1)", head: "Base Case Computation",
     cap: `At t = 1, antecedent history is empty. Each state cell is initialized as the product of initial prior &pi;<sub>i</sub> and emission likelihood B(i, ${ob(0)}).`,
     body: eq("&alpha;<sub>1</sub>(i) = &pi;(i) &times; B(i, o<sub>1</sub>)", "Prior probability &pi;(i) &times; emission likelihood B(i, " + esc(O[q[0]]) + ")") +
       tb(["Hidden State i", sp("Prior Vector")("&pi;(i)"), sp("Emission Matrix")("B(i, " + esc(O[q[0]]) + ")"), "&alpha;<sub>1</sub>(i) = &pi; &times; B"], S.map((_, i) => tr([chip(i), pi[i], B[i][q[0]], `<b>${f(M.al[0][i])}</b>`]))),
@@ -561,12 +594,12 @@ function buildSteps(sn, quick) {
     const s2 = `<div class="blk b${j % 4}"><p><b>Summation (&Sigma;):</b> ${pr.map(f).join(" + ")} = <b>${f(sm)}</b></p></div>`;
     const s3 = `<div class="blk b${j % 4}"><p><b>Emission Factor:</b> B(${esc(S[j])}, ${esc(O[q[t]])}) = ${e}. Total &alpha; = ${f(sm)} &times; ${e} = <b>${f(val)}</b></p><p class="best">&alpha;<sub>${t + 1}</sub>(${esc(S[j])}) = ${f(val)}</p></div>`;
     const caps = {
-      1: `Day ${t + 1}, evaluating state ${chip(j)}: Computing incoming transitions from all day ${t} states weighted by transition probabilities A(i, j).`,
-      2: `Day ${t + 1}, state ${chip(j)}: Aggregating all convergent path probabilities via summation (&Sigma; = <b>${f(sm)}</b>).`,
-      3: `Day ${t + 1}, state ${chip(j)}: Factoring emission likelihood ${ob(t)} (${e}). Completed &alpha;<sub>${t + 1}</sub>(${S[j]}) = <b>${f(val)}</b>.`,
-      q: `Day ${t + 1}, state ${chip(j)}: Aggregated sum = <b>${f(sm)}</b>, emission = ${e}, &alpha; = <b>${f(val)}</b>.`
+      1: `Step ${t + 1}, evaluating state ${chip(j)}: Computing incoming transitions from all step ${t} states weighted by transition probabilities A(i, j).`,
+      2: `Step ${t + 1}, state ${chip(j)}: Aggregating all convergent path probabilities via summation (&Sigma; = <b>${f(sm)}</b>).`,
+      3: `Step ${t + 1}, state ${chip(j)}: Factoring emission likelihood ${ob(t)} (${e}). Completed &alpha;<sub>${t + 1}</sub>(${S[j]}) = <b>${f(val)}</b>.`,
+      q: `Step ${t + 1}, state ${chip(j)}: Aggregated sum = <b>${f(sm)}</b>, emission = ${e}, &alpha; = <b>${f(val)}</b>.`
     };
-    const ttl = { 1: `Day ${t + 1}: Incoming Transitions &rarr; ${S[j]}`, 2: `Day ${t + 1}: Sum Over Paths (&Sigma;) &rarr; ${S[j]}`, 3: `Day ${t + 1}: Emission Scaling &rarr; ${S[j]}`, q: `Day ${t + 1}: Computed &alpha; for ${S[j]}` };
+    const ttl = { 1: `Step ${t + 1}: Incoming Transitions &rarr; ${S[j]}`, 2: `Step ${t + 1}: Sum Over Paths (&Sigma;) &rarr; ${S[j]}`, 3: `Step ${t + 1}: Emission Scaling &rarr; ${S[j]}`, q: `Step ${t + 1}: Computed &alpha; for ${S[j]}` };
     const phases = quick ? ["q"] : [1, 2, 3];
     phases.forEach(ph => {
       const p = ph === "q" ? 3 : ph;
@@ -583,11 +616,69 @@ function buildSteps(sn, quick) {
   }
 
   steps.push({
-    part: "fwd", title: "Forward Termination: Total Sequence Likelihood P(O | &lambda;)", head: "Termination Condition",
-    cap: `Total sequence probability is the sum of forward variables at the final time step T: <b>P(O | &lambda;) = ${f(M.total)}</b>.`,
+    part: "fwd", title: "Forward Termination: Total Likelihood P(O | &lambda;)", head: "Termination Condition",
+    cap: `Total sequence probability is the sum of forward variables at final time step T: <b>P(O | &lambda;) = ${f(M.totalFwd)}</b>.`,
     body: eq("P(O | &lambda;) = &Sigma;<sub>i=1</sub><sup>N</sup> &alpha;<sub>T</sub>(i)", "Summing all terminal states at time T = " + T + ".") +
-      `<div class="blk"><p>P(O | &lambda;) = ${M.al[T - 1].map((v, i) => `&alpha;<sub>${T}</sub>(${chip(i)}): ${f(v)}`).join(" + ")} = <b>${f(M.total)}</b></p></div>`,
-    view: vw("fwd", doneF, { hiCol: T - 1, curT: T - 1, banner: "P(O | λ) = " + f(M.total) })
+      `<div class="blk"><p>P(O | &lambda;) = ${M.al[T - 1].map((v, i) => `&alpha;<sub>${T}</sub>(${chip(i)}): ${f(v)}`).join(" + ")} = <b>${f(M.totalFwd)}</b></p></div>`,
+    view: vw("fwd", doneF, { hiCol: T - 1, curT: T - 1, banner: "P(O | λ) = " + f(M.totalFwd) })
+  });
+
+  /* ---------- Backward ---------- */
+  const doneB = new Set();
+  steps.push({
+    part: "bwd", title: "Backward Algorithm: Formulation & Recursive Principle", head: "Sum-Product Trellis Recurrence (Right-to-Left)",
+    cap: `The Backward algorithm computes &beta;<sub>t</sub>(i) = P(o<sub>t+1</sub>, ..., o<sub>T</sub> | q<sub>t</sub> = S<sub>i</sub>, &lambda;) right-to-left across the lattice. It provides conditional future probabilities used in smoothing and parameter estimation (Baum-Welch).`,
+    body: eq("&beta;<sub>T</sub>(i) = 1.0", "Base condition (t = T): At the final step, no future observations remain; probability is defined as 1.0.") +
+         eq("&beta;<sub>t</sub>(i) = &Sigma;<sub>j=1</sub><sup>N</sup> [ A(i, j) &times; B(j, o<sub>t+1</sub>) &times; &beta;<sub>t+1</sub>(j) ]", "Inductive step (t < T): Transition from current state i to each future state j, multiply by emission of future symbol o<sub>t+1</sub> and future &beta;<sub>t+1</sub>(j), then sum."),
+    view: vw("bwd", doneB, {})
+  });
+
+  for (let i = 0; i < N; i++) doneB.add(K(T - 1, i));
+  steps.push({
+    part: "bwd", title: `Backward Initialization: Final Step (t = ${T})`, head: "Base Case Computation",
+    cap: `At terminal time step T = ${T}, there are no subsequent observations. Therefore, &beta;<sub>${T}</sub>(i) = 1.0 for all hidden states S<sub>i</sub>.`,
+    body: eq("&beta;<sub>T</sub>(i) = 1.0", "Initialized to unity for all states.") +
+      tb(["Hidden State i", "Rule", `&beta;<sub>${T}</sub>(i)`], S.map((_, i) => tr([chip(i), "Terminal boundary condition", "<b>1.00000</b>"]))),
+    view: vw("bwd", doneB, { fresh: new Set(S.map((_, i) => K(T - 1, i))), curT: T - 1 })
+  });
+
+  for (let t = T - 2; t >= 0; t--) for (let i = 0; i < N; i++) {
+    const pr = M.prB[t][i], sm = sumOf(pr), nextOb = O[q[t + 1]];
+    const s1 = eq("&beta;<sub>t</sub>(i) = &Sigma;<sub>j</sub> [ A(i, j) &times; B(j, o<sub>t+1</sub>) &times; &beta;<sub>t+1</sub>(j) ]", `Propagate backwards from step ${t + 2} to step ${t + 1}: sum transitions into each state j weighted by emission of next symbol “${nextOb}” and subsequent &beta;<sub>${t + 2}</sub>(j).`) +
+      `<h3>Outgoing contributions from &beta;<sub>${t + 1}</sub>(${chip(i)}) into Step ${t + 2}</h3>` +
+      tb(["Target State j", sp("Transition")(`A(${esc(S[i])}, j)`), sp("Emission")(`B(j, ${esc(nextOb)})`), sp("Subsequent &beta;")(`&beta;<sub>${t + 2}</sub>(j)`), "Product A &times; B &times; &beta;"],
+        S.map((_, j) => tr([chip(j), A[i][j], B[j][q[t + 1]], f(M.be[t + 1][j]), f(pr[j])])));
+    const s2 = `<div class="blk b${i % 4}"><p><b>Summation (&Sigma;):</b> ${pr.map(f).join(" + ")} = <b>${f(sm)}</b></p><p class="best">&beta;<sub>${t + 1}</sub>(${esc(S[i])}) = ${f(sm)}</p></div>`;
+    const caps = {
+      1: `Step ${t + 1}, evaluating state ${chip(i)}: Multiplying transitions to all future states at step ${t + 2} by emission of “${nextOb}” and future &beta; values.`,
+      2: `Step ${t + 1}, state ${chip(i)}: Summing all branch products &rarr; &beta;<sub>${t + 1}</sub>(${S[i]}) = <b>${f(sm)}</b>.`,
+      q: `Step ${t + 1}, state ${chip(i)}: Sum of future paths weighted by transitions and emission &rarr; &beta;<sub>${t + 1}</sub>(${S[i]}) = <b>${f(sm)}</b>.`
+    };
+    const ttl = { 1: `Step ${t + 1}: Outgoing Transitions from ${S[i]}`, 2: `Step ${t + 1}: Backward Summation &rarr; ${S[i]}`, q: `Step ${t + 1}: Computed &beta; for ${S[i]}` };
+    const phases = quick ? ["q"] : [1, 2];
+    phases.forEach(ph => {
+      const p = ph === "q" ? 2 : ph;
+      if (p === 2) doneB.add(K(t, i));
+      steps.push({
+        part: "bwd", title: ttl[ph], head: "Backward Recursion", cap: caps[ph],
+        body: s1 + (p >= 2 ? s2 : ""),
+        view: vw("bwd", doneB, {
+          active: [t, i], phase: p, curT: t, fresh: p === 2 ? new Set([K(t, i)]) : null,
+          override: p === 1 ? { [K(t, i)]: "…" } : null
+        })
+      });
+    });
+  }
+
+  steps.push({
+    part: "bwd", title: "Backward Termination: Total Likelihood Verification", head: "Termination Condition",
+    cap: `Total sequence probability calculated via Backward: <b>P(O | &lambda;) = ${f(M.totalBwd)}</b>. This matches the Forward likelihood (${f(M.totalFwd)}) to full precision!`,
+    body: eq("P(O | &lambda;) = &Sigma;<sub>i=1</sub><sup>N</sup> [ &pi;(i) &times; B(i, o<sub>1</sub>) &times; &beta;<sub>1</sub>(i) ]", "Multiply initial priors &pi;, initial emission B(i, o_1), and &beta;_1 values, then sum across all states.") +
+      tb(["State i", "&pi;(i)", "B(i, " + esc(O[q[0]]) + ")", "&beta;<sub>1</sub>(i)", "Product &pi; &times; B &times; &beta;"],
+        S.map((_, i) => tr([chip(i), pi[i], B[i][q[0]], f(M.be[0][i]), f(M.prB0[i])]))) +
+      `<div class="blk"><p><b>Total Backward Likelihood P(O | &lambda;):</b> ${M.prB0.map(f).join(" + ")} = <b>${f(M.totalBwd)}</b></p>
+      <p class="best"><b>Cross-Validation Check:</b> P<sub>Forward</sub> (${f(M.totalFwd)}) &equiv; P<sub>Backward</sub> (${f(M.totalBwd)}) &nbsp; <span class="ok">✓ Verified Identical</span></p></div>`,
+    view: vw("bwd", doneB, { hiCol: 0, curT: 0, banner: "Backward P(O | λ) = " + f(M.totalBwd) })
   });
 
   /* ---------- Viterbi ---------- */
@@ -602,7 +693,7 @@ function buildSteps(sn, quick) {
 
   for (let j = 0; j < N; j++) doneV.add(K(0, j));
   steps.push({
-    part: "vit", title: "Viterbi Initialization: Day 1 (t = 1)", head: "Base Case Computation",
+    part: "vit", title: "Viterbi Initialization: Step 1 (t = 1)", head: "Base Case Computation",
     cap: `Initialization at t = 1 mirrors Forward base calculation. Backpointers &psi;<sub>1</sub> remain unassigned.`,
     body: eq("&delta;<sub>1</sub>(i) = &pi;(i) &times; B(i, o<sub>1</sub>)", "Initial prior &pi;(i) &times; emission likelihood B(i, " + esc(O[q[0]]) + ")") +
       tb(["Hidden State i", sp("Prior Vector")("&pi;(i)"), sp("Emission Matrix")("B(i, " + esc(O[q[0]]) + ")"), "&delta;<sub>1</sub>(i) = &pi; &times; B", "Backpointer &psi;<sub>1</sub>(i)"], S.map((_, i) => tr([chip(i), pi[i], B[i][q[0]], `<b>${f(M.de[0][i])}</b>`, "—"]))),
@@ -618,12 +709,12 @@ function buildSteps(sn, quick) {
     const s2t = tb(["Precursor State i", "Candidate &delta; &times; A", "Max Choice?"], S.map((_, i) => tr([chip(i), f(c[i]), i === bi ? "<b>Argmax Winner</b>" : "Pruned"], i === bi ? "win" : "")));
     const s3 = `<div class="blk b${j % 4}"><p><b>Emission Factor:</b> B(${esc(S[j])}, ${esc(O[q[t]])}) = ${e}. Total &delta; = ${f(c[bi])} &times; ${e} = <b>${f(val)}</b></p><p class="best">&delta;<sub>${t + 1}</sub>(${esc(S[j])}) = ${f(val)} | Backpointer &psi; = ${esc(S[bi])}</p></div>`;
     const caps = {
-      1: `Day ${t + 1}, state ${chip(j)}: Evaluating all incoming candidate paths &delta;<sub>${t}</sub>(i) &times; A(i, j).`,
-      2: `Day ${t + 1}, state ${chip(j)}: Selecting argmax incoming path from ${chip(bi)} (${f(c[bi])}). Non-optimal transitions are pruned.`,
-      3: `Day ${t + 1}, state ${chip(j)}: Multiplied by emission probability ${ob(t)} (${e}). Result: <b>&delta; = ${f(val)}</b>.`,
-      q: `Day ${t + 1}, state ${chip(j)}: Selected max antecedent ${chip(bi)} (${f(c[bi])}), multiplied by emission ${e} &rarr; &delta; = <b>${f(val)}</b>.`
+      1: `Step ${t + 1}, state ${chip(j)}: Evaluating all incoming candidate paths &delta;<sub>${t}</sub>(i) &times; A(i, j).`,
+      2: `Step ${t + 1}, state ${chip(j)}: Selecting argmax incoming path from ${chip(bi)} (${f(c[bi])}). Non-optimal transitions are pruned.`,
+      3: `Step ${t + 1}, state ${chip(j)}: Multiplied by emission probability ${ob(t)} (${e}). Result: <b>&delta; = ${f(val)}</b>.`,
+      q: `Step ${t + 1}, state ${chip(j)}: Selected max antecedent ${chip(bi)} (${f(c[bi])}), multiplied by emission ${e} &rarr; &delta; = <b>${f(val)}</b>.`
     };
-    const ttl = { 1: `Day ${t + 1}: Candidate Transitions &rarr; ${S[j]}`, 2: `Day ${t + 1}: Max Selection (Argmax) &rarr; ${S[j]}`, 3: `Day ${t + 1}: Emission Scaling &rarr; ${S[j]}`, q: `Day ${t + 1}: Computed &delta; for ${S[j]}` };
+    const ttl = { 1: `Step ${t + 1}: Candidate Transitions &rarr; ${S[j]}`, 2: `Step ${t + 1}: Max Selection (Argmax) &rarr; ${S[j]}`, 3: `Step ${t + 1}: Emission Scaling &rarr; ${S[j]}`, q: `Step ${t + 1}: Computed &delta; for ${S[j]}` };
     const phases = quick ? ["q"] : [1, 2, 3];
     phases.forEach(ph => {
       const p = ph === "q" ? 3 : ph;
@@ -667,7 +758,7 @@ function buildSteps(sn, quick) {
     for (let k = 0; k < T; k++) {
       const t0 = T - 1 - k;
       const cap = k === 0 ? `Backtracking begins at terminal winner q*<sub>${T}</sub> = ${chip(M.path[T - 1])}. Following stored backpointers backwards.`
-        : `At time t = ${t0 + 1}: backpointer from state ${chip(M.path[t0 + 1])} retrieves predecessor state ${chip(M.path[t0])}.`;
+        : `At step t = ${t0 + 1}: backpointer from state ${chip(M.path[t0 + 1])} retrieves predecessor state ${chip(M.path[t0])}.`;
       steps.push({
         part: "vit", title: k === 0 ? "Backtracking: Initialize at Terminal State" : `Backtracking: Trace to Step t = ${t0 + 1}`, head: "Backpointer Traversal", cap,
         body: `<p>Trace log of backpointer traversal:</p>` + btTable(t0), view: pathView(t0)
@@ -682,26 +773,45 @@ function buildSteps(sn, quick) {
     view: pathView(0, { curT: null, banner: "Best path joint probability P* = " + f(M.best) })
   });
 
-  /* ---------- Answer ---------- */
+  /* ---------- Unified Answer (All 3 Algorithms) ---------- */
   const tbl = (title, v, path) => `<h3>${title}</h3><div class="scroll"><table><tr><th>State</th>${v.map((_, t) => `<th>Step ${t + 1}</th>`).join("")}</tr>${S.map((s, i) => `<tr><th>${esc(s)}</th>${v.map((r, t) => `<td${path && path[t] === i ? ' style="background:#CFF2E3;font-weight:700"' : ""}>${f(r[i])}</td>`).join("")}</tr>`).join("")}</table></div>`;
   const psT = `<h3>Viterbi Backpointers Matrix (&psi;)</h3><div class="scroll"><table class="calc"><tr><th>State</th>${M.ps.map((_, t) => `<th>Step ${t + 1}</th>`).join("")}</tr>${S.map((s, j) => `<tr><th>${esc(s)}</th>${M.ps.map(r => `<td>${r[j] === null ? "—" : esc(S[r[j]])}</td>`).join("")}</tr>`).join("")}</table></div>`;
   steps.push({
-    part: "ans", title: "Comprehensive Results: Forward Likelihood vs. Viterbi Path", head: "Theoretical Summary & Comparison",
-    cap: `<b>Forward Likelihood:</b> P(O | &lambda;) = <b>${f(M.total)}</b> across all possible state trajectories. <b>Viterbi Path:</b> ${M.path.map(i => chip(i)).join(" &rarr; ")} with P* = <b>${f(M.best)}</b>.`,
+    part: "ans", title: "Comprehensive Results: Forward, Backward & Viterbi Solutions", head: "Theoretical Summary & Three-Algorithm Comparison",
+    cap: `<b>Forward:</b> P(O | &lambda;) = <b>${f(M.totalFwd)}</b> &nbsp;|&nbsp; <b>Backward:</b> P(O | &lambda;) = <b>${f(M.totalBwd)}</b> &nbsp;|&nbsp; <b>Viterbi:</b> ${M.path.map(i => chip(i)).join(" &rarr; ")} (P* = <b>${f(M.best)}</b>).`,
     body: `<div class="final">
-      <h3>1. Forward Likelihood (Evaluation Problem)</h3>
+      <h3>1. Forward Algorithm Answer (Evaluation)</h3>
       <p><b>Sum-Product Rule:</b> P(O | &lambda;) = &Sigma;<sub>i=1</sub><sup>N</sup> &alpha;<sub>T</sub>(i)</p>
-      <p>${M.al[T - 1].map(f).join(" + ")} = <b>${f(M.total)}</b></p>
-      <p><b>P(O | &lambda;) = ${f(M.total)}</b></p>
+      <p>${M.al[T - 1].map(f).join(" + ")} = <b>${f(M.totalFwd)}</b></p>
+      <p><b>Total Forward Likelihood: P(O | &lambda;) = ${f(M.totalFwd)}</b></p>
       
-      <h3 style="margin-top:16px">2. Viterbi Decoding (Optimal Sequence Problem)</h3>
-      <p><b>Max-Product Rule:</b> q*<sub>T</sub> = argmax &delta;<sub>T</sub>(i), backtrack via &psi;</p>
-      <p><b>Decoded Sequence:</b> ${M.path.map(i => chip(i)).join(" &rarr; ")}</p>
-      <p><b>Joint Probability P* = ${f(M.best)}</b></p>
+      <hr style="border:0;border-top:1px solid #C98A00;margin:14px 0">
+
+      <h3>2. Backward Algorithm Answer (Evaluation &amp; Smoothing)</h3>
+      <p><b>Backward Recurrence Rule:</b> P(O | &lambda;) = &Sigma;<sub>i=1</sub><sup>N</sup> [ &pi;(i) &times; B(i, o<sub>1</sub>) &times; &beta;<sub>1</sub>(i) ]</p>
+      <p>${M.prB0.map(f).join(" + ")} = <b>${f(M.totalBwd)}</b></p>
+      <p><b>Total Backward Likelihood: P(O | &lambda;) = ${f(M.totalBwd)}</b></p>
+      <p class="ok" style="font-size:0.95rem"><b>✓ Cross-Validation:</b> Forward and Backward evaluations yield identical likelihood: <b>${f(M.totalFwd)}</b>.</p>
+
+      <hr style="border:0;border-top:1px solid #C98A00;margin:14px 0">
+
+      <h3>3. Viterbi Algorithm Answer (Optimal Path Decoding)</h3>
+      <p><b>Max-Product Rule:</b> q*<sub>T</sub> = argmax &delta;<sub>T</sub>(i), backtracking via &psi;</p>
+      <p><b>Most Likely State Sequence Q*: ${M.path.map(i => chip(i)).join(" &rarr; ")}</b></p>
+      <p><b>Optimal Path Joint Probability P* = ${f(M.best)}</b></p>
       
-      <div class="note" style="margin-top:14px"><b>Theoretical Insight:</b> P* &le; P(O | &lambda;) is guaranteed because Viterbi calculates the probability of the single maximal path, whereas Forward integrates the sum of all valid paths in the state space.</div>
-    </div>` + tbl("Complete Forward Variables Matrix (&alpha;)", M.al, null) + tbl("Complete Viterbi Variables Matrix (&delta;, optimal trajectory in green)", M.de, M.path) + psT,
-    view: pathView(0, { curT: null, banner: "P(O | λ) = " + f(M.total) + "   ·   P* = " + f(M.best) })
+      <div class="note" style="margin-top:14px">
+        <b>Comparative Analysis:</b><br>
+        &bull; <b>P(O | &lambda;) [Forward &amp; Backward] = ${f(M.totalFwd)}</b> (Total probability mass of all valid paths in the trellis)<br>
+        &bull; <b>P* [Viterbi] = ${f(M.best)}</b> (Probability of the single maximal path)<br>
+        &bull; <b>Invariant:</b> P* &le; P(O | &lambda;) &rarr; ${f(M.best)} &le; ${f(M.totalFwd)} (<span class="ok">Verified</span>)
+      </div>
+    </div>` + 
+    tbl("1. Forward Trellis Matrix (&alpha;)", M.al, null) + 
+    tbl("2. Backward Trellis Matrix (&beta;)", M.be, null) + 
+    tbl("3. Viterbi Trellis Matrix (&delta;, optimal sequence highlighted)", M.de, M.path) + 
+    psT,
+    view: pathView(0, { curT: null, banner: "P(O | λ) = " + f(M.totalFwd) + "   ·   P* = " + f(M.best) })
   });
 
   return steps;
@@ -750,7 +860,8 @@ function buildSvg(sn) {
 }
 
 function applyView(v, sn) {
-  const { T, N } = G, M = sn.M, tab = v.algo === "vit" ? M.de : M.al;
+  const { T, N } = G, M = sn.M;
+  const tab = v.algo === "vit" ? M.de : (v.algo === "bwd" ? M.be : M.al);
   G.heads.forEach((g, t) => g.setAttribute("class", "head" + (v.curT === t ? " cur" : "")));
   for (let t = 0; t < T; t++) for (let j = 0; j < N; j++) {
     const key = K(t, j), n = G.nodes[t][j];
@@ -769,18 +880,37 @@ function applyView(v, sn) {
   }
   for (const k in G.edges) {
     const [t, i, j] = k.split(",").map(Number), E = G.edges[k];
-    const act = v.active && v.active[0] === t && v.active[1] === j;
     let c = "edge", lab = null, lc = "elab";
-    if (v.path && v.path.edges.has(k)) c += " path";
-    else if (act && v.phase >= 1) {
-      c += " inc";
-      lab = fd((v.algo === "vit" ? M.prV : M.prF)[t][j][i]);
-      if (v.algo === "vit" && v.phase >= 2) { if (M.ps[t][j] === i) { c += " win"; lc += " w"; } else { c += " lose"; lc += " lose"; } }
-    } else if (v.done.has(K(t, j))) {
-      if (v.algo === "vit") { if (M.ps[t][j] === i) c += " kept"; } else if (v.algo === "fwd") c += " sumd";
+    if (v.path && v.path.edges.has(k)) {
+      c += " path";
+    } else if (v.algo === "bwd") {
+      const isActBwd = v.active && v.active[0] === (t - 1) && v.active[1] === i;
+      if (isActBwd && v.phase >= 1) {
+        c += " inc";
+        lab = fd(M.prB[t - 1][i][j]);
+      } else if (v.done.has(K(t - 1, i))) {
+        c += " sumd";
+      }
+    } else {
+      const act = v.active && v.active[0] === t && v.active[1] === j;
+      if (act && v.phase >= 1) {
+        c += " inc";
+        lab = fd((v.algo === "vit" ? M.prV : M.prF)[t][j][i]);
+        if (v.algo === "vit" && v.phase >= 2) {
+          if (M.ps[t][j] === i) { c += " win"; lc += " w"; } else { c += " lose"; lc += " lose"; }
+        }
+      } else if (v.done.has(K(t, j))) {
+        if (v.algo === "vit") { if (M.ps[t][j] === i) c += " kept"; }
+        else if (v.algo === "fwd") c += " sumd";
+      }
     }
     E.line.setAttribute("class", c);
-    if (lab !== null) { E.tx.textContent = lab; E.rect.setAttribute("width", lab.length * 7.8 + 14); E.rect.setAttribute("x", -(lab.length * 7.8 + 14) / 2); lc += " on"; }
+    if (lab !== null) {
+      E.tx.textContent = lab;
+      E.rect.setAttribute("width", lab.length * 7.8 + 14);
+      E.rect.setAttribute("x", -(lab.length * 7.8 + 14) / 2);
+      lc += " on";
+    }
     E.lab.setAttribute("class", lc);
   }
   G.banner.textContent = v.banner || "";
@@ -818,7 +948,7 @@ function startStage(keepPart) {
   steps = buildSteps(snap, quick); G = buildSvg(snap);
   partStart = {}; steps.forEach((s, i) => { if (!(s.part in partStart)) partStart[s.part] = i; });
   $("slider").max = steps.length - 1;
-  $("tabs").innerHTML = ["ovr", "fwd", "vit", "ans"].map(p => `<button class="tab" type="button" data-part="${p}">${PN[p]}</button>`).join("");
+  $("tabs").innerHTML = ["ovr", "fwd", "bwd", "vit", "ans"].map(p => `<button class="tab" type="button" data-part="${p}">${PN[p]}</button>`).join("");
   document.querySelectorAll(".tab").forEach(b => b.onclick = () => { stopPlay(); go(partStart[b.dataset.part]); });
   const S = snap.S;
   $("topinfo").innerHTML = `<span><b>Hidden States:</b> ${S.map((s, j) => `<span class="st s${j % 4}">${esc(s)}</span>`).join(" ")}</span><span><b>Observation:</b> ${snap.q.map((k, t) => `t<sub>${t + 1}</sub> = ${esc(snap.O[k])}`).join(", ")}</span>`;

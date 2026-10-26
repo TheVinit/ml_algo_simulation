@@ -18,6 +18,7 @@
 - [Theoretical & Mathematical Framework](#-theoretical--mathematical-framework)
   - [Formal Model Definition](#formal-model-definition)
   - [Problem 1: Evaluation via Forward Algorithm](#problem-1-evaluation-via-forward-algorithm)
+  - [Problem 1b: Smoothing & Likelihood via Backward Algorithm](#problem-1b-smoothing--likelihood-via-backward-algorithm)
   - [Problem 2: Decoding via Viterbi Algorithm](#problem-2-decoding-via-viterbi-algorithm)
   - [Theoretical Invariant: Path vs. Total Probability](#theoretical-invariant-path-vs-total-probability)
 - [Python Reference Implementation](#-python-reference-implementation)
@@ -113,6 +114,27 @@ Direct path summation is computationally intractable with complexity $\mathcal{O
 
 4. **Termination**:
    $$P(O \mid \lambda) = \sum_{i=1}^N \alpha_T(i)$$
+
+---
+
+### Problem 1b: Smoothing & Likelihood via Backward Algorithm
+
+The Backward Algorithm computes the conditional probability of future observations given the hidden state at step $t$, running **right-to-left** across the lattice:
+
+1. **Backward Variable Definition**:
+   $$\beta_t(i) = P(o_{t+1}, o_{t+2}, \dots, o_T \mid q_t = S_i, \lambda)$$
+
+2. **Initialization ($t = T$)**:
+   $$\beta_T(i) = 1.0, \quad 1 \le i \le N$$
+
+3. **Induction ($t = T-1, T-2, \dots, 1$)**:
+   $$\beta_t(i) = \sum_{j=1}^N A_{ij} \cdot B_j(o_{t+1}) \cdot \beta_{t+1}(j), \quad 1 \le i \le N$$
+
+4. **Termination ($t = 1$)**:
+   $$P(O \mid \lambda) = \sum_{i=1}^N \pi_i \cdot B_i(o_1) \cdot \beta_1(i)$$
+
+> **Cross-Validation Invariant**: For any discrete time step $t \in \{1, \dots, T\}$, the total likelihood is invariant:
+> $$P(O \mid \lambda) = \sum_{i=1}^N \alpha_t(i) \beta_t(i) = \sum_{i=1}^N \alpha_T(i) = \sum_{i=1}^N \pi_i B_i(o_1) \beta_1(i)$$
 
 ---
 
